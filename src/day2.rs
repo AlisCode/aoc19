@@ -7,14 +7,25 @@ fn generator_input(input: &str) -> Vec<i32> {
         .collect()
 }
 
+#[derive(Clone)]
 pub struct Program {
-    pub data: Vec<i32>,
+    /// Data of the program (parsed input)
+    data: Vec<i32>,
+    /// Code pointer
     pointer: usize,
 }
 
 impl Program {
     pub fn new(data: Vec<i32>) -> Self {
         Program { data, pointer: 0 }
+    }
+    
+    /// Solves the program for given verb and noun
+    pub fn solve_for(&mut self, verb: i32, noun: i32) -> i32 {
+        self.data[1] = verb;
+        self.data[2] = noun;
+        while self.next() {}
+        self.data[0]
     }
 
     // Continues the execution of the program, returning
@@ -45,23 +56,46 @@ impl Program {
 }
 
 #[aoc(day2, part1)]
-/// Solves part one by applying the calc_mass computation
+/// Solves part one by solving for verb = 12 and noun = 2  
 fn part_one(input: &[i32]) -> i32 {
     let mut program = Program::new(input.to_vec());
-    program.data[1] = 12;
-    program.data[2] = 2;
-    while program.next() {}
-    program.data[0]
+    program.solve_for(12, 2)
 }
 
 #[aoc(day2, part2)]
-/// Solves part one by applying the calc_mass computation
+/// Solves part two : 
+/// On the Reddit thread for solutions (https://www.reddit.com/r/adventofcode/comments/e4u0rw/2019_day_2_solutions/)
+/// we can see that a constraint solver (z3) simplifies this problem as solving 19690720 = c1 + c2*v + n
+/// where c1 and c2 will vary (since they depend on your input).
 fn part_two(input: &[i32]) -> i32 {
+    // The first step is to find c1 and c2. In order to do this, we need to solve the program for known verb and noun. 
+    // Here, we'll solve for two cases: 
+    // * v = 12 and n = 2, 
+    // * v = 13 and n = 2
+    //
+    // This will give us two results: r1 and r2. We then have the system such as : 
+    // { r1 = c1 + c2 * 12 + 2  
+    // { r2 = c1 + c2 * 13 + 2
     let mut program = Program::new(input.to_vec());
-    program.data[1] = 13;
-    program.data[2] = 2;
-    while program.next() {}
-    program.data[0]
+    let mut program_copy = program.clone(); 
+    let r1 = program.solve_for(12, 2); 
+    let r2 = program_copy.solve_for(13, 2); 
+
+    // Simplyfing this system gives us 
+    // { c1 = 13 * r1 - 12 * r2 - 2
+    // { c2 = r2 - r1
+    let c1 = 13 * r1 - 12 * r2 - 2;
+    let c2 = r2 - r1;
+
+    // We then need to solve the following equation : 
+    // 19690720 = c1 + c2 * v + n
+    // ==> 196960720 - c1 = c2 * v + n
+    // The most straightforward solution is then to use the euclidean division.
+    let val = 19690720 - c1; 
+    let (v, n) = (val / c2, val % c2);
+
+    // And return the formatted result :)
+    100 * v + n
 }
 
 #[cfg(test)]
