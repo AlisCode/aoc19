@@ -20,8 +20,20 @@ impl Instruction {
     }
 }
 
+#[derive(Debug)]
+pub enum InstructionParseError {
+    IntError(ParseIntError),
+    WrongIdent(String),
+}
+
+impl From<ParseIntError> for InstructionParseError {
+    fn from(pie: ParseIntError) -> Self {
+        InstructionParseError::IntError(pie)
+    }
+}
+
 impl FromStr for Instruction {
-    type Err = ParseIntError;
+    type Err = InstructionParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let ident = &s[0..=0];
         let rest = s[1..].parse::<u32>()?;
@@ -30,10 +42,20 @@ impl FromStr for Instruction {
             "D" => Ok(Instruction::Down(rest)),
             "L" => Ok(Instruction::Left(rest)),
             "U" => Ok(Instruction::Up(rest)),
-            _ => panic!("Not a correct instruction"),
+            _ => Err(InstructionParseError::WrongIdent(ident.to_string())),
         }
     }
 }
+
+impl std::fmt::Display for InstructionParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            InstructionParseError::IntError(pie) => write!(f, "Error parsing integer {}", pie),
+            InstructionParseError::WrongIdent(what) => write!(f, "Wrong identifier {}", what),
+        }
+    }
+}
+impl std::error::Error for InstructionParseError {}
 
 pub struct Node {
     position: (i32, i32),
@@ -60,13 +82,13 @@ impl Node {
 }
 
 #[aoc_generator(day3)]
-fn generator_input(input: &str) -> Vec<Vec<Instruction>> {
+fn generator_input(input: &str) -> Result<Vec<Vec<Instruction>>, InstructionParseError> {
     input
         .lines()
         .map(|a| {
             a.split(",")
-                .filter_map(|i| Instruction::from_str(i).ok())
-                .collect()
+                .map(|i| Instruction::from_str(i))
+                .collect::<Result<Vec<Instruction>, InstructionParseError>>()
         })
         .collect()
 }
@@ -151,20 +173,39 @@ fn part_two(input: &[Vec<Instruction>]) -> u32 {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{generator_input, part_one};
+    use super::{generator_input, part_one, part_two};
 
     #[test]
     fn day3_part_one() {
-        let generated = generator_input("R8,U5,L5,D3\nU7,R6,D4,L4");
+        let generated = generator_input("R8,U5,L5,D3\nU7,R6,D4,L4").expect("Failed to parse");
         assert_eq!(part_one(&generated), 6);
 
         let generated =
-            generator_input("R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83");
+            generator_input("R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83")
+                .expect("Failed to parse");
         assert_eq!(part_one(&generated), 159);
 
         let generated = generator_input(
             "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7",
-        );
+        )
+        .expect("Failed to parse");
         assert_eq!(part_one(&generated), 135);
+    }
+
+    #[test]
+    fn day3_part_two() {
+        let generated = generator_input("R8,U5,L5,D3\nU7,R6,D4,L4").expect("Failed to parse");
+        assert_eq!(part_two(&generated), 30);
+
+        let generated =
+            generator_input("R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83")
+                .expect("Failed to parse");
+        assert_eq!(part_two(&generated), 610);
+
+        let generated = generator_input(
+            "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7",
+        )
+        .expect("Failed to parse");
+        assert_eq!(part_two(&generated), 410);
     }
 }
