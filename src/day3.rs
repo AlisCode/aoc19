@@ -35,6 +35,30 @@ impl FromStr for Instruction {
     }
 }
 
+pub struct Node {
+    position: (i32, i32),
+    steps: u32,
+}
+
+impl std::hash::Hash for Node {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.position.hash(state);
+    }
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.position == other.position
+    }
+}
+impl Eq for Node {}
+
+impl Node {
+    pub fn new(position: (i32, i32), steps: u32) -> Self {
+        Node { position, steps }
+    }
+}
+
 #[aoc_generator(day3)]
 fn generator_input(input: &str) -> Vec<Vec<Instruction>> {
     input
@@ -48,8 +72,9 @@ fn generator_input(input: &str) -> Vec<Vec<Instruction>> {
 }
 
 struct CollisionChecker {
-    line_1: std::collections::HashSet<(i32, i32)>,
-    line_2: std::collections::HashSet<(i32, i32)>,
+    line_1: std::collections::HashSet<Node>,
+    line_2: std::collections::HashSet<Node>,
+    steps: u32,
     current: (i32, i32),
 }
 
@@ -58,6 +83,7 @@ impl CollisionChecker {
         CollisionChecker {
             line_1: Default::default(),
             line_2: Default::default(),
+            steps: 0,
             current: (0, 0),
         }
     }
@@ -71,7 +97,9 @@ impl CollisionChecker {
                 &Instruction::Down(_) => self.current.1 -= 1,
                 &Instruction::Up(_) => self.current.1 += 1,
             }
-            let to_add = self.current.clone();
+            let position = self.current.clone();
+            self.steps += 1;
+            let to_add = Node::new(position, self.steps);
             match line {
                 1 => self.line_1.insert(to_add),
                 2 => self.line_2.insert(to_add),
@@ -80,12 +108,13 @@ impl CollisionChecker {
         })
     }
 
-    pub fn collisions(&self) -> impl Iterator<Item = &(i32, i32)> {
+    pub fn collisions(&self) -> impl Iterator<Item = &Node> {
         self.line_1.intersection(&self.line_2)
     }
 
     pub fn restart(&mut self) {
         self.current = (0, 0);
+        self.steps = 0;
     }
 }
 
@@ -100,7 +129,22 @@ fn part_one(input: &[Vec<Instruction>]) -> i32 {
     populate_line(&mut cc, &input[0], 1);
     populate_line(&mut cc, &input[1], 2);
     cc.collisions()
-        .map(|c| c.0.abs() + c.1.abs())
+        .map(|c| c.position.0.abs() + c.position.1.abs())
+        .min()
+        .expect("Failed to find min")
+}
+
+#[aoc(day3, part2)]
+fn part_two(input: &[Vec<Instruction>]) -> u32 {
+    let mut cc = CollisionChecker::new();
+    populate_line(&mut cc, &input[0], 1);
+    populate_line(&mut cc, &input[1], 2);
+    cc.collisions()
+        .map(|c| {
+            let d1 = cc.line_1.get(c).unwrap().steps;
+            let d2 = cc.line_2.get(c).unwrap().steps;
+            d1 + d2
+        })
         .min()
         .expect("Failed to find min")
 }
