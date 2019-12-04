@@ -24,19 +24,14 @@ fn pass_match(x: &str) -> bool {
 }
 
 fn pass_match_two(x: &str) -> bool {
-    let mut nb_adjacent = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let mut decrease = false;
-    x.chars().zip(x.chars().skip(1)).for_each(|(a, b)| {
-        if a == b {
-            nb_adjacent[a.to_string().parse::<usize>().unwrap()] += 1;
-        }
-        let a = a.to_string().parse::<u32>().unwrap();
-        let b = b.to_string().parse::<u32>().unwrap();
-        if a > b {
-            decrease = true;
-        }
-    });
-    nb_adjacent.iter().filter(|&x| *x == 1).count() >= 1 && !decrease
+    let occurences: std::collections::HashMap<char, usize> =
+        x.chars().fold(Default::default(), |mut state, c| {
+            let entry = state.entry(c).or_insert(0);
+            *entry += 1;
+            state
+        });
+
+    occurences.values().any(|x| *x == 2)
 }
 
 #[aoc(day4, part1)]
@@ -51,6 +46,7 @@ fn part_one((a, b): &(u32, u32)) -> usize {
 fn part_two((a, b): &(u32, u32)) -> usize {
     (*a..=*b)
         .map(|x| format!("{}", x))
+        .filter(|x| pass_match(x))
         .filter(|x| pass_match_two(x))
         .count()
 }
