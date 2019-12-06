@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 aoc-runner = "*"
 aoc-runner-derive = "*"
+pathfinding = "2.0"
