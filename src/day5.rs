@@ -10,7 +10,7 @@ fn part_one(input: &[i32]) -> i32 {
     let mut computer = Computer::new(input.to_vec());
     computer.input(1);
     computer.execute();
-    *computer.output.last().unwrap()
+    *computer.output.iter().last().unwrap()
 }
 
 #[aoc(day5, part2)]
@@ -18,5 +18,5 @@ fn part_two(input: &[i32]) -> i32 {
     let mut computer = Computer::new(input.to_vec());
     computer.input(5);
     computer.execute();
-    *computer.output.last().unwrap()
+    *computer.output.iter().last().unwrap()
 }
