@@ -76,7 +76,7 @@ pub mod tests {
     }
 
     #[test]
-    fn day7_part_two() {
+    fn day6_part_two() {
         let input = input_generator("COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L\nK)YOU\nI)SAN");
         assert_eq!(part_two(&input), 4);
     }
