@@ -86,15 +86,20 @@ impl Instruction {
     }
 }
 
+#[derive(Debug)]
 pub struct Computer {
     /// Data of the program
     code: Vec<i32>, 
     /// Code pointer
     pointer: usize,
     /// Output of the computer 
-    pub output: Vec<i32>,
+    pub output: VecDeque<i32>,
     /// Input of the computer
     input: VecDeque<i32>,
+    /// Whether or not the computer should halt execution on output or not
+    halt_on_output: bool,
+    /// Whether the computer should halt execution on missing input or not
+    halt_on_missing_input: bool,
 }
 
 impl Computer {
@@ -103,8 +108,10 @@ impl Computer {
         Computer {
             code, 
             pointer: 0,
-            output: vec![],
+            output: VecDeque::new(),
             input: VecDeque::new(),
+            halt_on_output: false,
+            halt_on_missing_input: false,
         }
     }
 
@@ -123,8 +130,24 @@ impl Computer {
         self.input.push_back(val);
     }
 
-    pub fn get_output(&self) -> impl Iterator<Item = &i32> {
+    pub fn get_next_output(&mut self) -> Option<i32> {
+        self.output.pop_front()
+    }
+
+    pub fn get_all_output(&self) -> impl Iterator<Item = &i32> {
         self.output.iter()
+    }
+
+    /// Sets the halt_on_output flag on that computer instance
+    pub fn halt_on_output(mut self) -> Self {
+        self.halt_on_output = true;
+        self
+    }
+
+    /// Sets the halt_on_output flag on that computer instance
+    pub fn halt_on_missing_input(mut self) -> Self {
+        self.halt_on_missing_input = true;
+        self
     }
 
     /// Executes the next instruction. Returns false if the program has halted
@@ -135,8 +158,8 @@ impl Computer {
         match instr {
             Instruction::Add(a,b,c) => self.code[c] = a.evaluate(&self.code) + b.evaluate(&self.code),
             Instruction::Mul(a,b,c) => self.code[c] = a.evaluate(&self.code) * b.evaluate(&self.code),
-            Instruction::Inp(a) => { let inp = self.input.pop_front().expect("No input left"); self.code[a] = inp },
-            Instruction::Out(a) => self.output.push(a.evaluate(&self.code)),
+            Instruction::Inp(a) => { let inp = self.input.pop_front(); if let Some(i) = inp { self.code[a] = i; } else { return !self.halt_on_missing_input; } },
+            Instruction::Out(a) => { self.output.push_back(a.evaluate(&self.code)); self.pointer += forward + 1; return !self.halt_on_output; },
             Instruction::JumpIfTrue(a, b) => {
                 if a.evaluate(&self.code) != 0 {
                     self.pointer = b.evaluate(&self.code) as usize;
@@ -179,6 +202,11 @@ impl Computer {
                 break;
             }
         }
+    }
+
+    /// Tells whether the amp is halted for good or not
+    pub fn halted(&self) -> bool {
+        return self.code[self.pointer] == 99
     }
 }
 
