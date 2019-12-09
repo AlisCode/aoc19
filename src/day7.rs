@@ -2,11 +2,11 @@ use crate::intcode_computer::{parse_input, Computer};
 use itertools::Itertools;
 
 #[aoc_generator(day7)]
-pub fn input_generator(input: &str) -> Vec<i32> {
+pub fn input_generator(input: &str) -> Vec<i64> {
     parse_input(input)
 }
 
-fn solve_sequence(input: &[i32], sequence: Vec<i32>) -> i32 {
+fn solve_sequence(input: &[i64], sequence: Vec<i64>) -> i64 {
     (0..5).fold(0, |inp_signal, idx| {
         let mut amp = Computer::new(input.to_vec());
         amp.input(sequence[idx]);
@@ -17,7 +17,7 @@ fn solve_sequence(input: &[i32], sequence: Vec<i32>) -> i32 {
     })
 }
 
-fn solve_sequence_feedback(input: &[i32], sequence: Vec<i32>) -> i32 {
+fn solve_sequence_feedback(input: &[i64], sequence: Vec<i64>) -> i64 {
     let mut amps: Vec<Computer> = sequence
         .iter()
         .map(|i| {
@@ -45,7 +45,7 @@ fn solve_sequence_feedback(input: &[i32], sequence: Vec<i32>) -> i32 {
 }
 
 #[aoc(day7, part1)]
-fn part_one(input: &[i32]) -> i32 {
+fn part_one(input: &[i64]) -> i64 {
     (0..5)
         .permutations(5)
         .map(|p| solve_sequence(input, p))
@@ -54,7 +54,7 @@ fn part_one(input: &[i32]) -> i32 {
 }
 
 #[aoc(day7, part2)]
-fn part_two(input: &[i32]) -> i32 {
+fn part_two(input: &[i64]) -> i64 {
     (5..10)
         .permutations(5)
         .map(|p| solve_sequence_feedback(input, p))
