@@ -266,6 +266,10 @@ impl Computer {
         println!("{:?}", self.code);
     }
 
+    pub fn debug_output(&self) {
+        println!("{:?}", self.output);
+    }
+
     /// Executes the whole program
     pub fn execute(&mut self) {
         loop {
