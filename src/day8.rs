@@ -61,7 +61,7 @@ fn solve_part_two(input: &[u32], wide: usize, tall: usize) -> String {
     img.chunks(wide).fold("\n".to_string(), |mut i, val| {
         val.iter().for_each(|x| {
             if *x == 1 {
-                i.push_str("*");
+                i.push_str("█");
             } else {
                 i.push_str(" ");
             }
@@ -99,7 +99,7 @@ pub mod tests {
     fn day8_part_two() {
         assert_eq!(
             solve_part_two(&[0, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 2, 0, 0, 0, 0], 2, 2),
-            "\n *\n* \n"
+            "\n █\n█ \n"
         );
     }
 }

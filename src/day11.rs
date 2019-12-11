@@ -106,7 +106,7 @@ fn part_two(input: &[i64]) -> String {
     .map(move |x| {
         let mut line: String = (bounds.2..=bounds.3).map(|y| {
            let val = map.get(&(x,y)).unwrap_or(&0);
-           if *val == 1 { '*' } else { ' ' }
+           if *val == 1 { '█' } else { ' ' }
        }).collect(); 
        line.push('\n');
        line
