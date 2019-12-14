@@ -20,9 +20,9 @@ impl Value {
             Value::Immediate(x) => x,
             Value::Position(addr) if !write_mode => code[addr],
             Value::Position(addr) if write_mode => addr as i64,
-            Value::Relative(addr) if !write_mode => code[(addr + relative_base) as usize], 
+            Value::Relative(addr) if !write_mode => code[(addr + relative_base) as usize],
             Value::Relative(addr) if write_mode => addr + relative_base,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -31,7 +31,7 @@ impl Value {
             0 => Value::Position(val as usize),
             1 => Value::Immediate(val),
             2 => Value::Relative(val),
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }
@@ -96,9 +96,7 @@ impl Instruction {
                 Value::from(code[pointer + 2], p2),
                 Value::from(code[pointer + 3], p3),
             ),
-            9 => Instruction::SetRelativeBase(
-                Value::from(code[pointer + 1], p1),
-            ),
+            9 => Instruction::SetRelativeBase(Value::from(code[pointer + 1], p1)),
             99 => Instruction::Halt,
             x => {
                 println!("Unhandled {}", x);
@@ -203,12 +201,14 @@ impl Computer {
         let mut change_pc = true;
         match instr {
             Instruction::Add(a, b, c) => {
-                let dst = c.evaluate(&self.code, self.relative_base, true) as usize; 
-                self.code[dst] = a.evaluate(&self.code, self.relative_base, false) + b.evaluate(&self.code, self.relative_base, false)
+                let dst = c.evaluate(&self.code, self.relative_base, true) as usize;
+                self.code[dst] = a.evaluate(&self.code, self.relative_base, false)
+                    + b.evaluate(&self.code, self.relative_base, false)
             }
             Instruction::Mul(a, b, c) => {
-                let dst = c.evaluate(&self.code, self.relative_base, true) as usize; 
-                self.code[dst] = a.evaluate(&self.code, self.relative_base, false) * b.evaluate(&self.code, self.relative_base, false)
+                let dst = c.evaluate(&self.code, self.relative_base, true) as usize;
+                self.code[dst] = a.evaluate(&self.code, self.relative_base, false)
+                    * b.evaluate(&self.code, self.relative_base, false)
             }
             Instruction::Inp(a) => {
                 let inp = self.input.pop_front();
@@ -220,7 +220,8 @@ impl Computer {
                 }
             }
             Instruction::Out(a) => {
-                self.output.push_back(a.evaluate(&self.code, self.relative_base, false));
+                self.output
+                    .push_back(a.evaluate(&self.code, self.relative_base, false));
                 self.pointer += forward + 1;
                 return !self.halt_on_output;
             }
@@ -239,18 +240,18 @@ impl Computer {
             Instruction::LessThan(a, b, c) => {
                 let a = a.evaluate(&self.code, self.relative_base, false);
                 let b = b.evaluate(&self.code, self.relative_base, false);
-                let dst = c.evaluate(&self.code, self.relative_base, true) as usize; 
+                let dst = c.evaluate(&self.code, self.relative_base, true) as usize;
                 self.code[dst] = if a < b { 1 } else { 0 }
             }
             Instruction::Equals(a, b, c) => {
                 let a = a.evaluate(&self.code, self.relative_base, false);
                 let b = b.evaluate(&self.code, self.relative_base, false);
-                let dst = c.evaluate(&self.code, self.relative_base, true) as usize; 
+                let dst = c.evaluate(&self.code, self.relative_base, true) as usize;
                 self.code[dst] = if a == b { 1 } else { 0 }
             }
             Instruction::SetRelativeBase(offset) => {
                 self.relative_base += offset.evaluate(&self.code, self.relative_base, false);
-            },
+            }
             Instruction::Halt => {
                 return false;
             }
@@ -268,6 +269,10 @@ impl Computer {
 
     pub fn debug_output(&self) {
         println!("{:?}", self.output);
+    }
+
+    pub fn clear_output(&mut self) {
+        self.output = VecDeque::new();
     }
 
     /// Executes the whole program
@@ -306,8 +311,11 @@ pub mod tests {
         let mut computer = Computer::new(input).set_available_memory(150);
         computer.execute();
         let output: Vec<i64> = computer.get_all_output().cloned().collect();
-        assert_eq!(output, vec![109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]);
-        
+        assert_eq!(
+            output,
+            vec![109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]
+        );
+
         let input = parse_input("1102,34915192,34915192,7,4,7,99,0");
         let mut computer = Computer::new(input).set_available_memory(150);
         computer.execute();
